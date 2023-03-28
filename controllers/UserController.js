@@ -98,7 +98,7 @@ const signin = async (req, res) => {
 };
 
 let getUser = async (req, res) => {
-    let userid = req.params.id;
+    let userid = req.user._id;
     let Data;
     try {
         let user = await User.findById(userid)
@@ -109,7 +109,7 @@ let getUser = async (req, res) => {
             .then(p => {
                 Data = p;
             })
-            .catch(error => console.log(error));
+            .catch(error => Data = error);
 
         res.json({
             status: true,
@@ -121,24 +121,25 @@ let getUser = async (req, res) => {
 }
 
 let updateUser = async (req, res) => {
-    const { name, password, avatar } = req.body;
     try {
-        let upUser;
+
+        const { name, password, avatar } = req.body;
+        let user = req.user;
+        let encryptedPassword;
+
         if (password) {
             const salt = await bcrypt.genSalt(10);
             // // now we set user password to hashed password
-            let encryptedPassword = await bcrypt.hash(password, salt);
-            upPass = await User.findOneAndUpdate({ _id: req.params.id }, { password: encryptedPassword })
+            encryptedPassword = await bcrypt.hash(password, salt);
         }
-        if (name && avatar == "") {
-            upUser = await User.findOneAndUpdate({ _id: req.params.id }, { name })
-        } else if (avatar && name == "") {
-            upUser = await User.findOneAndUpdate({ _id: req.params.id }, { avatar })
-        } else {
-            upUser = await User.findOneAndUpdate({ _id: req.params.id }, { name, avatar })
-        }
+        let upUser = await User.findOneAndUpdate({ _id: user._id }, {
+            name: name || user.name,
+            password: encryptedPassword || user.password,
+            avatar: avatar || user.avatar
+        })
+
         if (!upUser) {
-            res.send("update not saved")
+            res.send("changes not saved")
         } else {
             res.json({ status: true, message: "User updated seccessfuly" });
         }
@@ -162,10 +163,13 @@ let resetPassEmail = async (req, res) => {
         }
 
         const token = generateToken(existingUser._id);
+        const Link = `https://vidyavault.netlify.app/resetpassword?token=${token}&id=${existingUser._id}`;
 
-        const Link = `http://localhost:3000/passwordreset?token=${token}&id=${existingUser._id}`;
+        let obj = {
+            "Link": Link,
+        }
 
-        sendEmail(email, "Reset password", Link);
+        sendEmail(email, "Reset password", obj);
         res.send("send email success");
     } catch (error) {
         res.json({ status: false, message: "Server failed to send email", "Error": error.message });
@@ -174,15 +178,16 @@ let resetPassEmail = async (req, res) => {
 
 let resetPass = async (req, res) => {
     try {
-        let password = req.body.password;
-        if(!password) {
+        let { password, id } = req.body;
+        if (!password) {
             return res.status(422).json({ status: false, message: "Missing password." });
         }
         if (password) {
             const salt = await bcrypt.genSalt(10);
-            // // now we set user password to hashed password
+            
             let encryptedPassword = await bcrypt.hash(password, salt);
-            let upUser = await User.findOneAndUpdate({ _id: req.params.id }, { password: encryptedPassword })
+
+            let upUser = await User.findOneAndUpdate({ _id: id }, { password: encryptedPassword })
 
             if (!upUser) {
                 res.send("password reset failed")

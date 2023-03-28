@@ -3,16 +3,20 @@ const {
     addUserCourse,
     addAdminCourse,
     subscribeCourse,
-    feed } = require('../controllers/CourseController');
+    feed, 
+    unsubscribeCourse,
+    removeMembership} = require('../controllers/CourseController');
 const { auth } = require("../authorization/auth");
 
 const router = express.Router();
 
 // course routes
-router.route("/user/feed/:id").get(auth, feed);
-router.route("/user/subscribe/:id").post(auth, subscribeCourse);
-router.route("/user/cc/:id").post(auth, addUserCourse);
-router.route("/admin/cc/:id").post(auth, addAdminCourse);
+router.route("/user/feed").get(auth, feed);
+router.route("/user/subscribe").post(auth, subscribeCourse);
+router.route("/user/unsubscribe").post(auth, unsubscribeCourse);
+router.route("/user/removemembership").post(auth, removeMembership);
+router.route("/user/cc").post(auth, addUserCourse);
+router.route("/admin/cc").post(auth, addAdminCourse);
 
 
 module.exports = router;

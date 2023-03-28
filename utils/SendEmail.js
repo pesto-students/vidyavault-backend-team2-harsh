@@ -1,10 +1,13 @@
 const nodemailer = require("nodemailer");
+const dotenv = require('dotenv');
 const ejs = require('ejs');
+
+dotenv.config();
 
 const transporter = nodemailer.createTransport({
     host: process.env.EMAIL_HOST,
     port: process.env.EMAIL_PORT,
-    secure: true,
+    secure: false,
     auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS
@@ -26,10 +29,7 @@ const sendEmail = (receiver, subject, content) => {
                     filename: 'darklogo.png',
                     path: __dirname + '/../views/darklogo.png',
                     cid: 'logo'
-                }],
-                tls:{
-                    rejectUnAuthorized:true
-                }
+                }]
             };
 
             console.log("receiver", receiver);

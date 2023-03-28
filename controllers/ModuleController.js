@@ -1,5 +1,5 @@
 const { Module } = require("../models/Module");
-const { CourseFile } = require("../models/CourseFile");
+const { Course } = require("../models/Course");
 
 const addFile = async (req, res) => {
 
@@ -99,7 +99,7 @@ const updateModule = async (req, res) => {
 const deleteModule = async (req, res) => {
 
     try {
-        const { moduleId, fileId } = req.body;
+        const { moduleId, fileId, courseId } = req.body;
 
         if (moduleId) {
             Module.findOneAndDelete({ _id: moduleId }, function (err, docs) {
@@ -107,9 +107,7 @@ const deleteModule = async (req, res) => {
                     console.log(err)
                 }
                 else {
-                    CourseFile.updateOne({ "belongsTO": req.params.id },
-                        { $pull: { courseData: docs._id } });
-                    console.log(docs);
+                    Course.updateOne({ "_id": courseId }, { $pull: { "modules": docs._id } });
                     res.status(200).json({ status: true, message: "module deleted successfuly" });
                 }
             });

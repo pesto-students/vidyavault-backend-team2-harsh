@@ -73,20 +73,22 @@ const adminSignup = async (req, res) => {
         res.status(400).json({ status: false, message: "Something went wrong", "Error": error.message });
     }
 };
-// completed --------------------------------------------------------
+
 
 const memberInviteEmail = async (req, res) => {
-    let {email, orgId} = req.body;
-
+    let email = req.body.email;
+    // let orgId = req.user.org;
+    let orgId = "6416cbaa9327b98db444a327";
+    
     if (!email) {
         return res.status(422).json({ status: false, message: "Missing email." });
     }
   
-    let getOrg = await Organization.findOne({_id: orgId }).exec();
+    let getOrg = await Organization.findOne({"_id": orgId }).exec();
 
 
     let orgName = getOrg.orgName;
-    const Link = `http://localhost:8080/admin/membersignup?email=${email}&orgId=${orgId}`;
+    const Link = `https://vidyavault.netlify.app/membersignup?email=${email}&orgId=${orgId}`;
     let obj = {
         "Link": Link,
         "orgName": orgName
@@ -101,7 +103,6 @@ const memberInviteEmail = async (req, res) => {
 
 const memberSignup = async (req, res) => {
     try {
-        let id = req.params.id;
         const { name, email, password, orgId } = req.body;
 
         // generate salt to hash password
@@ -118,7 +119,7 @@ const memberSignup = async (req, res) => {
         let saved = await user.save();
         let memId = saved._id;
 
-        let own = await Organization.findOneAndUpdate({ _id: orgId }, { $push: { members: memId } });
+        let own = await Organization.findOneAndUpdate({ "_id": orgId }, { $push: { "members": memId } });
         own.membersCount += 1;
         own.save();
 

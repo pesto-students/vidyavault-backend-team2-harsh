@@ -17,7 +17,7 @@ const UserSchema = new mongoose.Schema({
     courseCount: { type: Number, default: 00 },
     ownCourses: [{ type: Schema.Types.ObjectId, ref: 'Course' }],
     subscriptions: [{ type: Schema.Types.ObjectId, ref: 'Course' }],
-    memberships: [{ type: Schema.Types.ObjectId, ref: 'Course' }],
+    memberships: [{ type: Schema.Types.ObjectId, ref: 'Organization' }],
     isAdmin: { type: Boolean, default: false },
     org: { type: Schema.Types.ObjectId, ref: 'Organization' }
 },

@@ -20,20 +20,17 @@ const router = express.Router();
 router.route("/user/signup").post(signup);
 router.route("/user/signin").post(signin);
 router.route("/user/resetpasswordemail").post(resetPassEmail);
-router.route("/user/:id").get(auth, getUser);
-router.route("/user/:id").post(auth, updateUser);
-router.route("/user/resetpassword/:id").post(auth, resetPass);
+router.route("/user").get(auth, getUser);
+router.route("/user").patch(auth, updateUser);
+router.route("/user/resetpassword").post(auth, resetPass);
 
 
 // Admin routes
 router.route("/admin/signup").post(adminSignup);
-router.route("/admin/signin").post(signin);
-router.route("/admin/resetpasswordemail").post(resetPassEmail);
-router.route("/admin/:id").get(auth, getUser);
-router.route("/admin/:id").post(auth, updateUser);
-router.route("/admin/resetpassword/:id").post(auth, resetPass);
 
-router.route("/admin/memberinviteemail/:id").post(auth, memberInviteEmail);
+
+
+router.route("/admin/memberinviteemail").post( memberInviteEmail);
 router.route("/admin/membersignup").post(auth, memberSignup);
 
 
