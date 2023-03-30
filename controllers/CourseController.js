@@ -28,7 +28,6 @@ const addUserCourse = async (req, res) => {
         });
 
         let saved = await course.save();
-
         let courseId = saved._id;
 
         let own = await User.findOneAndUpdate({ "_id": userId }, { $push: { "ownCourses": courseId } });
@@ -42,12 +41,12 @@ const addUserCourse = async (req, res) => {
         });
         module.files.push(mobj);
         let mod = await module.save();
-        let CId = mod._id;
+        let Mid = mod._id;
 
-        Course.findOneAndUpdate({"_id": courseId}, { $push: { "modules": CId } })
+        let CouPush = await Course.findOneAndUpdate({ "_id": courseId }, { $push: { "modules": Mid } })
+        let courPush = await CouPush.save();
 
-
-        if (!saved && !own && !mod && !fileSaved) {
+        if (!saved && !own && !mod && !courPush) {
             res.json({ message: "Not able to save Course!" });
         } else {
             res.json({
@@ -62,61 +61,61 @@ const addUserCourse = async (req, res) => {
     }
 }
 
-const addAdminCourse = async (req, res) => {
-    try {
-        const {
-            courseName,
-            thumbnail,
-            description,
-            moduleName,
-            lecName,
-            path
-        } = req.body;
+// const addAdminCourse = async (req, res) => {
+//     try {
+//         const {
+//             courseName,
+//             thumbnail,
+//             description,
+//             moduleName,
+//             lecName,
+//             path
+//         } = req.body;
 
-        const userId = req.user._id;
+//         const userId = req.user._id;
 
-        // creating new course
-        const course = new Course({
-            courseName,
-            thumbnail,
-            description,
-            author: userId,
-            org: true
-        });
-        let saved = await course.save();
-        let courseId = saved._id;
+//         // creating new course
+//         const course = new Course({
+//             courseName,
+//             thumbnail,
+//             description,
+//             author: userId,
+//             org: true
+//         });
+//         let saved = await course.save();
+//         let courseId = saved._id;
 
-        // saving course in organization
-        let own = await Organization.findOneAndUpdate({ admin: userId }, { $push: { courses: courseId } });
-        own.courseCount += 1;
-        let ownSaved = await own.save();
-
-
-        // creating module
-        let mobj = { lecName, path }
-        let module = await new Module({
-            moduleName
-        });
-        module.files.push(mobj);
-        let mod = await module.save();
-        let CId = mod._id;
-
-        Course.findOneAndUpdate({"_id": courseId}, { $push: { "modules": CId } })
+//         // saving course in organization
+//         let own = await Organization.findOneAndUpdate({ admin: userId }, { $push: { courses: courseId } });
+//         own.courseCount += 1;
+//         let ownSaved = await own.save();
 
 
-        if (!saved && !ownSaved && !fileSaved) {
-            res.json({ message: "Not able to save Course!" });
-        } else {
-            res.json({
-                status: true,
-                message: "Course saved successfully!"
-            });
-        }
+//         // creating module
+//         let mobj = { lecName, path }
+//         let module = await new Module({
+//             moduleName
+//         });
+//         module.files.push(mobj);
+//         let mod = await module.save();
+//         let Mid = mod._id;
 
-    } catch (error) {
-        res.status(400).json({ status: false, message: "Something went wrong", "Error": error.message });
-    }
-}
+//         let CouPush = await Course.findOneAndUpdate({ "_id": courseId }, { $push: { "modules": Mid } })
+//         let courPush = await CouPush.save();
+
+//         if (!saved && !ownSaved && !mod && !courPush) {
+//             res.json({ message: "Not able to save Course!" });
+//         } else {
+//             res.json({
+//                 status: true,
+//                 message: "Course saved successfully!"
+//             });
+//         }
+
+//     } catch (error) {
+//         res.status(400).json({ status: false, message: "Something went wrong", "Error": error.message });
+//     }
+// }
 
 const subscribeCourse = async (req, res) => {
 
@@ -124,21 +123,38 @@ const subscribeCourse = async (req, res) => {
 
         let { courseId } = req.body;
         let user = req.user;
+        let exist = false;
 
-        let sub = await Course.findOneAndUpdate({ "_id": courseId }, { $push: { "subscribers": user._id } })
-        sub.totalSubscribers += 1;
-        let saved = await sub.save();
+        Course.find({ "subscribers": { $in: [user._id] } }, (err, data) => {
+            if (err) {
+                console.log("err", err)
+            } else {
+                data.map((item, index) => {
+                    if (item._id == courseId) {
+                        return exist = true;
+                    }
+                })
+                if (!exist) {
+                    allow();
+                } else {
+                    res.json({ "msg": "You have already subscribed this course!" })
+                }
+            }
+        });
 
-        let upUser = await User.findOneAndUpdate({ "_id": user._id }, { $push: { "subscriptions": courseId } });
-        upUser.save();
+        async function allow() {
+            let sub = await Course.findOneAndUpdate({ "_id": courseId }, { $push: { "subscribers": user._id } })
+            sub.totalSubscribers += 1;
+            let saved = await sub.save();
 
-        if (!saved) {
-            res.json({ message: "subscription fail!" });
-        } else {
+            let upUser = await User.findOneAndUpdate({ "_id": user._id }, { $push: { "subscriptions": courseId } });
+            upUser.save();
+
             res.json({
                 status: true,
                 message: "Subscribed successfully"
             });
+
         }
 
     } catch (error) {
@@ -175,29 +191,6 @@ const unsubscribeCourse = async (req, res) => {
     }
 }
 
-const removeMembership = async (req, res) => {
-    try {
-        let memId = req.body.id;
-        let user = req.user;
-        let upUser = await User.findOneAndUpdate({ "_id": memId }, { $pull: { "memberships": user.org } }, { new: true })
-        let Doc = await Organization.findOneAndUpdate({ "_id": user.org }, { $pull: { "members": memId } })
-        Doc.membersCount -= 1;
-        let upDoc = Doc.save();
-
-        if(!upUser && !upDoc) {
-            res.json({ message: "fail to remove the member!" })
-        }else {
-            res.json({
-                status: true,
-                message: "removed member successfully!"
-            });
-        }
-    } catch (error) {
-        res.status(400).json({ status: false, message: "Fail to remove the member! try again", "Error": error.message });
-    }
-}
-
-
 const feed = async (req, res) => {
     const exclude = req.user._id;
     try {
@@ -212,4 +205,29 @@ const feed = async (req, res) => {
     }
 }
 
-module.exports = { addUserCourse, addAdminCourse, subscribeCourse, unsubscribeCourse, removeMembership, feed };
+const getCourse = async (req, res) => {
+
+    try {
+
+        let courseId = req.body.courseId;
+        let Data;
+        let course = await Course.findById(courseId)
+            .populate('modules')
+            .then(p => {
+                Data = p;
+            })
+            .catch(error => Data = error);
+
+        res.json({
+            status: true,
+            data: Data
+        });
+    } catch (error) {
+        res.status(400).json({ status: false, message: "fail to get course", "Error": error.message });
+    }
+
+}
+
+
+
+module.exports = { addUserCourse, subscribeCourse, unsubscribeCourse, feed, getCourse };

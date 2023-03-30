@@ -1,23 +1,40 @@
 const { Course } = require("../models/Course");
+const { Organization } = require("../models/Organization");
 const { User } = require("../models/User");
 
-// working on it...
 
-// const updateOrg = async (req, res) => {
-//     try {
-//     } catch (error) {
-//         res.status(400).json({ status: false, message: "Something went wrong" });
-//     }
-// }
+const updateOrg = async (req, res) => {
 
-// const subscribeCourse = async (req, res) => {
+    try {
+        let orgData;
+        const {
+            orgId,
+            orgName,
+            description,
+            goal,
+            slogan,
+            banner } = req.body;
 
-//     try {
+        let getOrg = await Organization.find({"_id": orgId})
+            .then((p) => {
+                orgData = p;
+            })
 
-//     } catch (error) {
-//         res.status(400).json({ status: false, message: "Fail to subscribe! try again" });
-//     }
-// }
+        let orgUpdate = await Organization.findOneAndUpdate({ "_id": orgId }, {
+            orgName: orgName || orgData.orgName,
+            description: description || orgData.description,
+            goal: goal || orgData.goal,
+            slogan: slogan || orgData.slogan,
+            banner: banner || orgData.banner
+        })
+        let setOrg = await orgUpdate.save();
+        res.json({ status: true, message: "updated" });
+
+    } catch (error) {
+        res.json({ status: false, message: "something went wrong", "Error": error.message });
+    }
+
+}
 
 
 module.exports = { updateOrg };

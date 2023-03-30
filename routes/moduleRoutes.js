@@ -1,16 +1,22 @@
 const express = require("express");
 const { auth } = require("../authorization/auth");
 const {
-    updateModule,
+    updateModuleName,
     addFile,
-    deleteModule } = require("../controllers/ModuleController");
+    addModule,
+    deleteModule, 
+    deleteFile} = require("../controllers/ModuleController");
 
 const router = express.Router();
 
 // Module routes
-router.route("/module").patch(auth, updateModule);
-router.route("/modulefile").post(auth, addFile);
-router.route("/module/:id").delete(auth, deleteModule);
+router.route("/module").post(auth, addModule);//
+router.route("/module").patch(auth, updateModuleName);//
+router.route("/module").delete(auth, deleteModule);// 
+
+
+router.route("/file").post(auth, addFile);//
+router.route("/file").delete(auth, deleteFile);//
 
 
 module.exports = router;

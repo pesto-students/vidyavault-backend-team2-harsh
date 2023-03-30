@@ -69,33 +69,56 @@ const adminSignup = async (req, res) => {
             });
         }
     } catch (error) {
-        console.log(error.message);
         res.status(400).json({ status: false, message: "Something went wrong", "Error": error.message });
     }
 };
 
 
 const memberInviteEmail = async (req, res) => {
-    let email = req.body.email;
-    // let orgId = req.user.org;
-    let orgId = "6416cbaa9327b98db444a327";
-    
-    if (!email) {
-        return res.status(422).json({ status: false, message: "Missing email." });
-    }
-  
-    let getOrg = await Organization.findOne({"_id": orgId }).exec();
 
-
-    let orgName = getOrg.orgName;
-    const Link = `https://vidyavault.netlify.app/membersignup?email=${email}&orgId=${orgId}`;
-    let obj = {
-        "Link": Link,
-        "orgName": orgName
-    }
     try {
-        sendEmail(email, "join this Organization", obj);
-        res.send("send email success");
+
+        let email = req.body.email;
+        let orgId = req.user.org;
+
+        if (!email) {
+            return res.status(422).json({ status: false, message: "Missing email." });
+        }
+
+        const existingUser = await User.findOne({ email }).exec();
+
+        if (existingUser) {
+            existingUser.memberships.push(orgId);
+            let saved = await existingUser.save();
+            let memId = existingUser._id;
+            console.log(saved);
+
+            let own = await Organization.findOneAndUpdate({ "_id": orgId }, { $push: { "members": memId } });
+            own.membersCount += 1;
+            let saveOrg = await own.save();
+
+            if (!saved) {
+                res.json({ message: "Not able to add member!" });
+            } else {
+                res.json({
+                    status: true,
+                    message: "member added successfuly"
+                });
+            }
+        } else {
+            let getOrg = await Organization.findOne({ "_id": orgId }).exec();
+
+
+            let orgName = getOrg.orgName;
+            const Link = `https://vidyavault.netlify.app/membersignup?email=${email}&orgId=${orgId}`;
+            let obj = {
+                "Link": Link,
+                "orgName": orgName
+            }
+            sendEmail(email, "join this Organization", obj);
+            res.send("send email success");
+        }
+
     } catch (error) {
         res.json({ status: false, message: "Server failed to send email" });
     }
@@ -138,11 +161,32 @@ const memberSignup = async (req, res) => {
         }
 
     } catch (error) {
-        res.json({ status: false, message: "Server failed to send email" });
+        res.json({ status: false, message: "Server failed to send email", "Error": error.message });
     }
 }
 
+const removeMembership = async (req, res) => {
+    try {
+        let { memId } = req.body;
+        let user = req.user;
+        let upUser = await User.findOneAndUpdate({ "_id": memId }, { $pull: { "memberships": user.org } }, { new: true })
+        let saved = await upUser.save();
+        let Doc = await Organization.findOneAndUpdate({ "_id": user.org }, { $pull: { "members": memId } })
+        Doc.membersCount -= 1;
+        let upDoc = Doc.save();
 
+        if (!saved && !upDoc) {
+            res.json({ message: "fail to remove the member!" })
+        } else {
+            res.json({
+                status: true,
+                message: "removed member successfully!"
+            });
+        }
+    } catch (error) {
+        res.status(400).json({ status: false, message: "Fail to remove the member! try again", "Error": error.message });
+    }
+}
 
-module.exports = { adminSignup, memberInviteEmail, memberSignup }
+module.exports = { adminSignup, memberInviteEmail, memberSignup, removeMembership }
 
