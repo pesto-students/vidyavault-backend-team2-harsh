@@ -13,7 +13,7 @@ const {
     memberInviteEmail,
     memberSignup, 
     removeMembership } = require("../controllers/AdminController");
-const { updateOrg } = require("../controllers/OrgController");
+const { updateOrg, getOrg } = require("../controllers/OrgController");
 
 const router = express.Router();
 
@@ -40,6 +40,7 @@ router.route("/admin/memberinviteemail").post(auth, memberInviteEmail);
 router.route("/admin/membersignup").post(auth, memberSignup);
 router.route("/admin/removemember").post(auth, removeMembership);
 router.route("/admin/org").patch(auth, updateOrg);
+router.route("/admin/org").post(auth, getOrg);
 
 
 module.exports = router;

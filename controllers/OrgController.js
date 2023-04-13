@@ -36,5 +36,24 @@ const updateOrg = async (req, res) => {
 
 }
 
+const getOrg = async (req, res) => {
+    try {
+        let orgId = req.body.orgId;
+        let Data;
+        let course = await Organization.findById(orgId)
+            .populate('members')
+            .then(p => {
+                Data = p;
+            })
+            .catch(error => Data = error);
 
-module.exports = { updateOrg };
+        res.json({
+            status: true,
+            data: Data
+        });
+    } catch (error) {
+        res.status(400).json({ status: false, message: "fail to get course", "Error": error.message });
+    }
+}
+
+module.exports = { updateOrg, getOrg };

@@ -12,11 +12,11 @@ const router = express.Router();
 // Module routes
 router.route("/module").post(auth, addModule);//
 router.route("/module").patch(auth, updateModuleName);//
-router.route("/module").delete(auth, deleteModule);// 
+router.route("/module").post(auth, deleteModule);// 
 
 
 router.route("/file").post(auth, addFile);//
-router.route("/file").delete(auth, deleteFile);//
+router.route("/file").post(auth, deleteFile);//
 
 
 module.exports = router;

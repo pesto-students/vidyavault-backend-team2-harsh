@@ -11,7 +11,7 @@ const router = express.Router();
 
 // course routes
 router.route("/user/feed").get(auth, feed);//
-router.route("/course").get(auth, getCourse);//
+router.route("/course").post(auth, getCourse);//
 
 router.route("/cc").post(auth, addUserCourse);//
 

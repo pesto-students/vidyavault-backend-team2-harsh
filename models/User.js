@@ -3,7 +3,7 @@ const { Schema } = mongoose;
 const { ValidateEmail } = require("../utils/Validators");
 
 const UserSchema = new mongoose.Schema({
-    name: { type: String, required: true, minlength: 1, maxlength: 20, unique: true },
+    name: { type: String, required: true, minlength: 1, maxlength: 20 },
     email: {
         type: String,
         lowercase: true,
